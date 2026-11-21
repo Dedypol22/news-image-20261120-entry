@@ -21,7 +21,8 @@ Thursday 19 November stories that were deliberately left out.
 This script does one thing: it copies the bundled PNG
 (assets/entry.png, next to this file) to the output path, byte for byte,
 after validating that it is a real, complete PNG of exactly 1024x1024
-pixels and at most 1 MiB. Standard library only; no network access;
+pixels and at most 1 MiB, that it is 8-bit truecolour RGB, and that nothing
+follows the IEND chunk. Standard library only; no network access;
 fully deterministic - running it twice produces identical bytes.
 
 Usage:
@@ -89,8 +90,17 @@ def validate_png(data):
             raise ValueError("chunk %r has a bad CRC" % ctype)
         if ctype == b"IHDR":
             seen_ihdr = True
+            bit_depth = data[pos + 16]
+            colour_type = data[pos + 17]
+            if (bit_depth, colour_type) != (8, 2):
+                raise ValueError(
+                    "PNG is bit depth %d colour type %d, expected 8-bit RGB"
+                    % (bit_depth, colour_type)
+                )
         if ctype == b"IEND":
             seen_iend = True
+            if end != len(data):
+                raise ValueError("trailing data after IEND chunk")
             break
         pos = end
     if not seen_ihdr or not seen_iend:
