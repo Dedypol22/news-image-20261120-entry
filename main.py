@@ -21,7 +21,7 @@ drawn illustration and a source tag:
     drones halting Genoa airport, Fiji's drought disaster, and Voyager 1
     reaching one light-day from Earth — plus a UTC timeline strip.
 
-This script validates the bundled image (a real PNG, at most 1024x1024,
+This script validates the bundled image (a real PNG, exactly 1024x1024,
 at most 1 MiB, complete IEND chunk) and writes it byte-for-byte to the
 output path. No network, fully deterministic.
 """
@@ -62,8 +62,9 @@ def validate(data):
         pos += 12 + length
     if width is None:
         fail("no IHDR chunk found")
-    if width > MAX_W or height > MAX_H:
-        fail("image is %dx%d, over the 1024x1024 limit" % (width, height))
+    if width != MAX_W or height != MAX_H:
+        fail("image is %dx%d, must be exactly %dx%d"
+             % (width, height, MAX_W, MAX_H))
     return width, height
 
 
